@@ -130,6 +130,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - {{name}}
+    - optparse-applicative
 
 tests:
   spec:
@@ -435,19 +436,46 @@ indent_size = 2
 {-# START_FILE app/App.hs #-}
 module App where
 
-import Protolude (IO)
+import Protolude
+
 import System.IO (hSetEncoding, stderr, stdout, utf8)
+import Options.Applicative
 
 import qualified Main
 
+data Options 
+  = Options 
+  { verbose :: Bool
+  , config :: FilePath
+  }
+
+options :: Parser Options
+options = Options 
+  <$> switch (long "verbose" <> short 'v' <> help "Whether to be verbose")
+  <*> configOption
+
+configOption :: Parser FilePath
+configOption = strOption 
+  $ long "config" 
+  <> metavar "CONFIG_PATH" 
+  <> help "FS path to config file" 
+  <> showDefault 
+  <> value "config.dhall"
 
 main :: IO ()
 main = do
   hSetEncoding stdout utf8
   hSetEncoding stderr utf8
-
+  Options { verbose, config } <- execParser opts
+  putText $ "Verbose mode is " <> if verbose then "ON" else "OFF"
+  putText $ "Using config file: " <> toS config
   Main.run
 
+  where
+    opts = info (options <**> helper)
+      ( fullDesc
+     <> progDesc "Program description goes here <- change it to match your program"
+     <> header "Program header goes here <- change it to match your program" )
 
 {-# START_FILE src/Main.hs #-}
 module Main (run) where
