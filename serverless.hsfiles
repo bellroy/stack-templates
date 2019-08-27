@@ -658,7 +658,7 @@ service: {{name}}-service
 provider:
   name: aws
   runtime: provided
-  stage: dev
+  stage: staging
   region: eu-central-1
   memorySize: 1024
   reservedConcurrency: 10
@@ -1073,7 +1073,7 @@ resource "aws_ssm_parameter" "serverlessDeploymentBucket" {
 
 {-# START_FILE terraform/terraform.tfvars #-}
 serverless_application_name = "{{name}}-app"
-serverless_stage = "dev"
+serverless_stage = "staging"
 serverless_service_name = "{{name}}-service"
 
 {-# START_FILE terraform/variables.tf #-}
