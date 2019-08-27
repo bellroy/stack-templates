@@ -277,7 +277,7 @@ node
   "language": "Haskell2010"
 }
 
-{-# START_FILE make.hs #-}
+{-# START_FILE make #-}
 #!/usr/bin/env stack
 -- stack --resolver lts-14.2 script
 
@@ -319,7 +319,7 @@ main = do
   x <- getRecord "Command line utility to automate deployments etc."
   unlessM serverlessInfo
     (die "Please make sure that serverless framework is installed")
-  unlessM (testfile "LICENSE")
+  unlessM (testfile "make")
     (die "Must be run from the project root")
   sh $ case x of
     Package -> package
@@ -506,6 +506,7 @@ default-extensions:
   - MultiParamTypeClasses
   - MultiWayIf
   - NamedFieldPuns
+  - NoImplicitPrelude
   - OverloadedLabels
   - OverloadedStrings
   - PatternSynonyms
@@ -622,6 +623,7 @@ import qualified Aws.Lambda as AWS
 import Control.Lens ((?~))
 import Control.Monad.Trans.Except (ExceptT, catchE, runExceptT, withExceptT)
 import qualified Data.Aeson as Json
+import Data.String (String)
 import qualified Lib
 import Types (Problem)
 
@@ -649,8 +651,8 @@ handleRequest request context =
     ?~ (toS $ Json.encode problem)
 
 {-# START_FILE serverless/serverless.yml #-}
-org: yuriylazaryev
-frameworkVersion: "=1.50.0"
+org: bellroy
+frameworkVersion: "=1.50.1"
 app: {{name}}-app
 service: {{name}}-service
 provider:
@@ -695,7 +697,7 @@ module Aws.Api.Gateway where
 import Protolude
 
 import Control.Lens hiding ((.=))
-import Data.Aeson
+import Data.Aeson hiding (String)
 import Data.Aeson.Casing (aesonDrop, camelCase)
 import Data.Aeson.TH (deriveFromJSON)
 import Data.Aeson.TextValue (TextValue, unTextValue)
@@ -705,6 +707,7 @@ import qualified Data.CaseInsensitive as CI
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap
 import Data.IP
+import Data.String (String)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
@@ -712,6 +715,7 @@ import GHC.Generics (Generic)
 import Network.AWS.Data.Base64
 import Network.AWS.Data.Text
 import qualified Network.HTTP.Types as HTTP
+import Prelude (fail)
 
 type Method = Text
 
@@ -904,9 +908,11 @@ has @FromText@ and @ToText@ instances, e.g. @TextValue Text@,
 -}
 module Data.Aeson.TextValue where
 
+import Protolude
+
 import Control.Lens.TH
 import Data.Aeson
-import Data.String
+import Prelude (fail)
 import Network.AWS.Data.Text (FromText(..), ToText(..), fromText)
 
 newtype TextValue a = TextValue { _unTextValue :: a }
@@ -933,6 +939,7 @@ import qualified Aws.Api.Gateway as Gateway
 import qualified Aws.Lambda as AWS (Context)
 import Control.Lens ((&), (?~), (^.))
 import Data.Aeson (eitherDecodeStrict, encode)
+import Data.String (String)
 import Text.URI.QQ (uri)
 import Types
 
@@ -969,6 +976,7 @@ import Protolude
 
 import Data.Aeson ((.=), FromJSON(..), ToJSON(..))
 import qualified Data.Aeson as Json
+import Data.String (String)
 import Text.URI (URI)
 import qualified Text.URI as URI
 

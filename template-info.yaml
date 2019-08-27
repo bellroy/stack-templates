@@ -1,3 +1,4 @@
 cli-app:
-  description:
-    Template for a Command Line Application project.
+  description: Template for a Command Line Application project.
+serverless:
+  description: Template for a Serverless Application project.
