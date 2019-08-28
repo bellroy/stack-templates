@@ -132,6 +132,11 @@ node
         "force-linebreak": false,
         "spaces": "none",
         "linebreaks": "none"
+      },
+      "<*> in expression": {
+        "force-linebreak": true,
+        "spaces": "both",
+        "linebreaks": "before"
       }
     },
     "group": {
@@ -211,7 +216,7 @@ node
       "let": "try-oneline",
       "record": "try-oneline",
       "type": "try-oneline",
-      "export-spec-list": "try-oneline",
+      "export-spec-list": "vertical",
       "list-comp": "try-oneline"
     },
     "penalty": {
@@ -243,7 +248,10 @@ node
       "let-binds": false,
       "where": false,
       "matches": false,
-      "limits": [10, 25],
+      "limits": [
+        10,
+        25
+      ],
       "case": false,
       "import-module": false,
       "import-spec": false,
@@ -253,22 +261,32 @@ node
     "options": {
       "sort-pragmas": true,
       "flexible-oneline": true,
-      "decl-no-blank-lines": [],
+      "decl-no-blank-lines": [
+        "where"
+      ],
       "split-language-pragmas": true,
       "align-sum-type-decl": false,
       "sort-import-lists": true,
       "preserve-vertical-space": false,
       "sort-imports": [
         {
-          "prefixes": ["Prelude", "Preamble", "Protolude"],
+          "prefixes": [
+            "Prelude",
+            "Preamble",
+            "Protolude"
+          ],
           "order": "sorted"
         },
         {
-          "prefixes": [""],
+          "prefixes": [
+            ""
+          ],
           "order": "sorted"
         },
         {
-          "prefixes": ["Test"],
+          "prefixes": [
+            "Test"
+          ],
           "order": "grouped"
         }
       ]
@@ -286,18 +304,31 @@ node
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE BlockArguments    #-}
 
+{-# OPTIONS_GHC -fhelpful-errors #-}
+{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wcompat #-}
+{-# OPTIONS_GHC -Widentities #-}
+{-# OPTIONS_GHC -Wimplicit-prelude #-}
+{-# OPTIONS_GHC -Wincomplete-record-updates #-}
+{-# OPTIONS_GHC -Wincomplete-uni-patterns #-}
+{-# OPTIONS_GHC -Wredundant-constraints #-}
+{-# OPTIONS_GHC -Wtabs #-}
+{-# OPTIONS_GHC -Wmissing-local-signatures #-}
+{-# OPTIONS_GHC -fhelpful-errors #-}
 
 import qualified Data.Text as T
+import Control.Exception (bracket)
 import Options.Generic
-import Protolude hiding (FilePath, die)
-import Turtle
+import Protolude hiding (FilePath, die, stdin)
+import Turtle hiding (root)
 
 --------------------------------------------------------------------------------
 ----------------------------- Data types ---------------------------------------
 --------------------------------------------------------------------------------
 
 data Args
-  = Package
+  = Watch
+  | Package
   | Deploy
     { verbose :: Bool
     }
@@ -316,15 +347,18 @@ instance ParseRecord Args
 
 main :: IO ()
 main = do
-  x <- getRecord "Command line utility to automate deployments etc."
-  unlessM serverlessInfo
-    (die "Please make sure that serverless framework is installed")
+  rec <- getRecord "Command line utility to automate deployments etc."
   unlessM (testfile "make")
     (die "Must be run from the project root")
-  sh $ case x of
-    Package -> package
-    Deploy verbose -> deploy verbose
-    Invoke local verbose body -> invoke local verbose body
+  case rec of
+    Watch ->
+      watch
+    Package ->
+      package
+    Deploy verbose' ->
+      deploy verbose'
+    Invoke local' verbose' body' ->
+      invoke local' verbose' body'
 
 serverlessInfo :: IO Bool
 serverlessInfo = do
@@ -335,57 +369,83 @@ serverlessInfo = do
 
 type BinaryPath = Text
 
+watch :: IO ()
+watch = sh $ proc "stack"
+  ["build"
+  , "--fast"
+  , "--file-watch"
+  , "--exec=clear"
+  ] stdin
+
+withStaticProject :: (() -> IO a) -> IO a
+withStaticProject cb = bracket
+  setStaticPackageYaml setDynamicPackageYaml
+  cb
+
+setDynamicPackageYaml :: () -> IO ()
+setDynamicPackageYaml _ = do
+  sh $ run_ "ln -sf package-dynamic.yaml package.yaml"
+  putText "Switched to dynamic package.yaml"
+
+setStaticPackageYaml :: IO ()
+setStaticPackageYaml = do
+  sh $ run_ "ln -sf package-static.yaml package.yaml"
+  putText "Switched to static package.yaml"
+
 clean :: Shell ExitCode
-clean = run_ "stack clean"
+clean = run_ "stack clean --docker"
 
 build :: Shell BinaryPath
 build = do
-  run_ "stack build"
-  snd <$> call_ "stack path --local-install-root"
+  using $ managed withStaticProject
+  _ <- run_ "stack build --docker"
+  snd <$> call_ "stack path --docker --local-install-root"
 
 copyBinary :: BinaryPath -> Shell ExitCode
 copyBinary root =
   run ["cp", T.strip root <> "/bin/bootstrap", "serverless"]
 
-slsDeploy :: Bool -> Shell ExitCode
-slsDeploy verbose = do
-  cd "serverless"
+slsDeploy :: MonadIO io => Bool -> io ()
+slsDeploy verbose' = sh do
+  pushd "serverless"
   run $ catMaybes
     [ pure "serverless deploy"
-    , if verbose then pure "--verbose" else mempty
+    , if verbose' then pure "--verbose" else mempty
     ]
 
-slsPackage :: Bool -> Shell ExitCode
-slsPackage verbose = do
-  cd "serverless"
+slsPackage :: MonadIO io => Bool -> io ()
+slsPackage verbose' = sh do
+  pushd "serverless"
   run $ catMaybes
     [ pure "serverless package"
-    , if verbose then pure "--verbose" else mempty
+    , if verbose' then pure "--verbose" else mempty
     ]
 
-deploy :: Bool -> Shell ExitCode
-deploy verbose = do
-  clean
+deploy :: Bool -> IO ()
+deploy verbose' = sh do
+  liftIO $ unlessM serverlessInfo
+    (die "Please make sure that serverless framework is installed")
+  _ <- clean
   root <- build -- TODO using/managed
-  copyBinary root
-  slsDeploy verbose
+  _ <- copyBinary root
+  slsDeploy verbose'
 
-package :: Shell ExitCode
-package = do
-  clean
+package :: IO ()
+package = sh do
+  _ <- clean
   root <- build -- TODO using/managed
-  copyBinary root
+  _ <- copyBinary root
   slsPackage True
 
-invoke :: Bool -> Bool -> Text -> Shell ExitCode
-invoke local verbose body = do
-  cd "serverless"
+invoke :: MonadIO io => Bool -> Bool -> Text -> io ()
+invoke local' verbose' payload = sh do
+  pushd "serverless"
   run $ catMaybes
     [ pure "serverless invoke"
-    , if local then pure "local" else mempty
-    , pure "-f haskell-aws-lambda -l"
-    , pure $ "-d '" <> body <> "'"
-    , if verbose then pure "--verbose" else mempty
+    , if local' then pure "local" else mempty
+    , pure "-f {{name}}-func -l"
+    , pure $ "--raw -d '" <> payload <> "'"
+    , if verbose' then pure "--verbose" else mempty
     ]
 
 --------------------------------------------------------------------------------
