@@ -186,9 +186,15 @@ tests:
     "TypeFamilies",
     "TypeFamilyDependencies",
     "TypeSynonymInstances",
-    "TypeOperators"
+    "TypeOperators",
+    "ViewPatterns"
   ],
-  "fixities": [],
+  "fixities": [
+    "infixl 8 <%?>",
+    "infixl 8 <%!?>",
+    "infixl 8 <?>",
+    "infixl 8 <!?>"
+  ],
   "formatting": {
     "op": {
       ",": {
@@ -235,6 +241,11 @@ tests:
         "force-linebreak": false,
         "spaces": "none",
         "linebreaks": "none"
+      },
+      "<*> in expression": {
+        "force-linebreak": true,
+        "spaces": "both",
+        "linebreaks": "before"
       }
     },
     "group": {
@@ -314,7 +325,7 @@ tests:
       "let": "try-oneline",
       "record": "try-oneline",
       "type": "try-oneline",
-      "export-spec-list": "try-oneline",
+      "export-spec-list": "vertical",
       "list-comp": "try-oneline"
     },
     "penalty": {
@@ -346,7 +357,10 @@ tests:
       "let-binds": false,
       "where": false,
       "matches": false,
-      "limits": [10, 25],
+      "limits": [
+        10,
+        25
+      ],
       "case": false,
       "import-module": false,
       "import-spec": false,
@@ -356,23 +370,34 @@ tests:
     "options": {
       "sort-pragmas": true,
       "flexible-oneline": true,
-      "decl-no-blank-lines": [],
+      "decl-no-blank-lines": [
+        "where"
+      ],
       "split-language-pragmas": true,
       "align-sum-type-decl": false,
       "sort-import-lists": true,
       "preserve-vertical-space": false,
       "sort-imports": [
         {
-          "prefixes": ["Prelude", "Preamble", "Protolude"],
+          "prefixes": [
+            "Prelude",
+            "Preamble",
+            "Protolude"
+          ],
           "order": "sorted"
         },
         {
-          "prefixes": [""],
+          "prefixes": [
+            ""
+          ],
           "order": "sorted"
         },
         {
-          "prefixes": ["Test"],
-          "order": "grouped"
+          "prefixes": [
+            "Test",
+            "Hedgehog"
+          ],
+          "order": "sorted"
         }
       ]
     }
