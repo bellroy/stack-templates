@@ -128,6 +128,11 @@ node
         "spaces": "both",
         "linebreaks": "after"
       },
+      "$$": {
+        "force-linebreak": false,
+        "spaces": "before",
+        "linebreaks": "none"
+      },
       "record in pattern": {
         "force-linebreak": false,
         "spaces": "none",
