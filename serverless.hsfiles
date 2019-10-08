@@ -78,14 +78,21 @@ node
     "RecordWildCards",
     "ScopedTypeVariables",
     "StandaloneDeriving",
+    "TemplateHaskell",
     "TupleSections",
     "TypeApplications",
     "TypeFamilies",
     "TypeFamilyDependencies",
     "TypeSynonymInstances",
-    "TypeOperators"
+    "TypeOperators",
+    "ViewPatterns"
   ],
-  "fixities": [],
+  "fixities": [
+    "infixl 8 <%?>",
+    "infixl 8 <%!?>",
+    "infixl 8 <?>",
+    "infixl 8 <!?>"
+  ],
   "formatting": {
     "op": {
       ",": {
@@ -97,6 +104,11 @@ node
         "force-linebreak": false,
         "spaces": "both",
         "linebreaks": "after"
+      },
+      "$$": {
+        "force-linebreak": false,
+        "spaces": "before",
+        "linebreaks": "none"
       },
       "@": {
         "force-linebreak": false,
@@ -123,25 +135,10 @@ node
         "spaces": "after",
         "linebreaks": "after"
       },
-      "$": {
-        "force-linebreak": false,
-        "spaces": "both",
-        "linebreaks": "after"
-      },
-      "$$": {
-        "force-linebreak": false,
-        "spaces": "before",
-        "linebreaks": "none"
-      },
       "record in pattern": {
         "force-linebreak": false,
         "spaces": "none",
         "linebreaks": "none"
-      },
-      "<*> in expression": {
-        "force-linebreak": true,
-        "spaces": "both",
-        "linebreaks": "before"
       }
     },
     "group": {
@@ -212,7 +209,7 @@ node
       }
     },
     "layout": {
-      "infix-app": "flex",
+      "infix-app": "try-oneline",
       "if": "try-oneline",
       "import-spec-list": "try-oneline",
       "con-decls": "try-oneline",
@@ -290,9 +287,10 @@ node
         },
         {
           "prefixes": [
-            "Test"
+            "Test",
+            "Hedgehog"
           ],
-          "order": "grouped"
+          "order": "sorted"
         }
       ]
     }
