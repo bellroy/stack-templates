@@ -181,6 +181,7 @@ tests:
     "RecordWildCards",
     "ScopedTypeVariables",
     "StandaloneDeriving",
+    "TemplateHaskell",
     "TupleSections",
     "TypeApplications",
     "TypeFamilies",
@@ -207,6 +208,11 @@ tests:
         "spaces": "both",
         "linebreaks": "after"
       },
+      "$$": {
+        "force-linebreak": false,
+        "spaces": "before",
+        "linebreaks": "none"
+      },
       "@": {
         "force-linebreak": false,
         "spaces": "none",
@@ -232,25 +238,10 @@ tests:
         "spaces": "after",
         "linebreaks": "after"
       },
-      "$": {
-        "force-linebreak": false,
-        "spaces": "both",
-        "linebreaks": "after"
-      },
-      "$$": {
-        "force-linebreak": false,
-        "spaces": "before",
-        "linebreaks": "none"
-      },
       "record in pattern": {
         "force-linebreak": false,
         "spaces": "none",
         "linebreaks": "none"
-      },
-      "<*> in expression": {
-        "force-linebreak": true,
-        "spaces": "both",
-        "linebreaks": "before"
       }
     },
     "group": {
@@ -321,7 +312,7 @@ tests:
       }
     },
     "layout": {
-      "infix-app": "flex",
+      "infix-app": "try-oneline",
       "if": "try-oneline",
       "import-spec-list": "try-oneline",
       "con-decls": "try-oneline",
